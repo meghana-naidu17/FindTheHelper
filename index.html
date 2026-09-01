@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SkillConnect — Cooperative Gig Services Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<body>
+
+<div class="app-frame">
+
+  <div class="boot-splash" id="bootSplash">
+    <div class="boot-spinner"></div>
+    <p>Connecting to SkillConnect database…</p>
+  </div>
+
+  <div class="app-header">
+    <div class="logo">
+      <div class="logo-badge">🤝</div>
+      <div>SkillConnect<span class="logo-sub">Cooperative Gig Platform</span></div>
+    </div>
+    <div class="header-actions">
+      <div id="userHeaderInfo" style="display: none;">
+        <div class="user-pill" id="userPill">
+          <span id="userBadgeText">Customer</span>
+          <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-content">
+
+    <!-- ================= AUTH & REGISTRATION ================= -->
+    <div id="authView" class="auth-container">
+      <div class="auth-banner-title">
+        <h2>Welcome to SkillConnect</h2>
+        <p>A cooperative marketplace connecting customers with trusted local helpers</p>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">🔑 Login</button>
+          <button class="tab-btn" id="tabRegister" onclick="switchAuthTab('register')">📝 Join as a Pro</button>
+        </div>
+
+        <div class="role-selector">
+          <div class="role-chip active" id="roleCust" onclick="selectRole('customer')">👤 Customer</div>
+          <div class="role-chip" id="roleTech" onclick="selectRole('technician')">🧰 Skilled Helper</div>
+          <div class="role-chip role-admin visible" id="roleAdmin" onclick="selectRole('admin')">🛡️ Admin</div>
+        </div>
+
+        <div id="registerNameGroup" style="display: none; flex-direction:column; gap:6px;">
+          <span class="field-label">Full legal name</span>
+          <div class="input-field"><span class="input-icon">👤</span><input type="text" id="authName" placeholder="e.g. Ravi Kumar" /></div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <span class="field-label">Email address</span>
+          <div class="input-field"><span class="input-icon">✉️</span><input type="email" id="authEmail" placeholder="you@example.com" /></div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <span class="field-label">Password</span>
+          <div class="input-field"><span class="input-icon">🔒</span><input type="password" id="authPassword" placeholder="Enter a password" /></div>
+        </div>
+
+        <div id="techFields" style="display: none; flex-direction: column; gap: 10px;">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span class="field-label">Your specialty</span>
+            <div class="input-field">
+              <span class="input-icon">🧰</span>
+              <select id="authSkill" onchange="updateFairPriceHint()">
+                <option value="plumber">Plumber Specialty 🪠</option>
+                <option value="electrician">Electrician / Appliance Specialty ⚡</option>
+                <option value="carpenter">Carpenter Specialty 🪚</option>
+                <option value="mechanic">Mechanic Specialty 🔧</option>
+                <option value="cleaner">Cleaning Specialist 🧹</option>
+                <option value="painter">Painter Specialist 🎨</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span class="field-label">Experience</span>
+            <div class="input-field"><span class="input-icon">⏱️</span><input type="text" id="authExp" placeholder="Years of Experience (e.g. 7 yrs)" value="7 yrs" /></div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span class="field-label">Your hourly rate</span>
+            <div class="input-field"><span class="input-icon">💰</span><input type="number" id="authRate" placeholder="Hourly Rate (₹/hr)" value="450" oninput="updateFairPriceHint()" /></div>
+            <div class="fair-price-hint" id="fairPriceHint">⚖️ Fair-price guide loading…</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span class="field-label">Identity verification</span>
+            <div class="input-field"><span class="input-icon">🆔</span><input type="text" id="authGovtId" placeholder="Govt ID / Aadhaar Verified" value="AADHAAR-8921-VERIFIED" /></div>
+          </div>
+        </div>
+
+        <button class="btn-auth-submit" id="btnAuthSubmit" onclick="handleAuthSubmit()">Log In to Account</button>
+        <p class="demo-note">New here? Any email/password registers a fresh customer or helper account. To explore instantly, try the seeded technician <strong>ravi.plumber@demo.com</strong> / <strong>password123</strong>. Admin access is restricted — use the <strong>Admin</strong> tab above with <strong>admin@skillconnect.com</strong> / <strong>admin123</strong>. Data is stored locally in your browser's IndexedDB — nothing leaves this device.</p>
+      </div>
+    </div>
+
+    <!-- ================= CUSTOMER DASHBOARD ================= -->
+    <div id="customerDash" class="dashboard-view">
+      <div class="ai-banner">
+        <div>
+          <h4 style="font-size:0.93rem; color:#7c3aed; font-weight:800;">🤖 Describe the problem</h4>
+          <p style="font-size:0.71rem; color:var(--text-muted);">No need to know what pro you need — just tell us what's wrong.</p>
+        </div>
+        <button class="btn-ai-open" onclick="openAIChat()">Diagnose</button>
+      </div>
+
+      <div id="activeBookingCard" style="display: none;"></div>
+
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search Plumber, Electrician…" onkeyup="applyFilters()" />
+      </div>
+
+      <div class="emergency-card">
+        <div>
+          <h4 style="font-size:1rem; font-weight:800;">🚨 Emergency Dispatch</h4>
+          <p style="font-size:0.71rem;">Auto-matched by distance, skill & trust</p>
+        </div>
+        <button class="btn-sos" onclick="triggerSOS()">Request SOS</button>
+      </div>
+
+      <div class="category-pills">
+        <div class="cat-pill active" onclick="selectCategory('all', this)">✨ All</div>
+        <div class="cat-pill" onclick="selectCategory('plumber', this)">🪠 Plumber</div>
+        <div class="cat-pill" onclick="selectCategory('electrician', this)">⚡ Electrician</div>
+        <div class="cat-pill" onclick="selectCategory('carpenter', this)">🪚 Carpenter</div>
+        <div class="cat-pill" onclick="selectCategory('mechanic', this)">🔧 Mechanic</div>
+        <div class="cat-pill" onclick="selectCategory('cleaner', this)">🧹 Cleaner</div>
+        <div class="cat-pill" onclick="selectCategory('painter', this)">🎨 Painter</div>
+      </div>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div class="section-eyebrow" id="nearbyEyebrow">📍 Live near you</div>
+          <button class="btn-trust" style="padding:5px 10px; font-size:0.68rem;" onclick="refreshUserLocation()">🎯 Use my location</button>
+        </div>
+        <p id="locationLabelText" style="font-size:0.68rem; color:var(--text-muted); margin-top:2px;">Detecting your location…</p>
+        <div id="nearbyMap" class="live-map" style="margin-top:8px;"></div>
+        <div class="map-legend" style="margin-top:8px;">
+          <span><i class="dot dot-worker"></i> Available helper</span>
+          <span><i class="dot dot-customer"></i> You</span>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:0.95rem;">Best available helpers near you</strong>
+        <span style="font-size:0.71rem; color:var(--text-muted);" id="workerCountText">6 Available</span>
+      </div>
+      <button class="btn-trust" style="align-self:flex-start;" onclick="triggerFindMatch()">🔎 Run hyperlocal matching engine</button>
+
+      <div class="worker-list" id="workerList"></div>
+    </div>
+
+    <!-- ================= TECHNICIAN DASHBOARD ================= -->
+    <div id="techDash" class="dashboard-view">
+      <div class="coop-banner">🤝 <span>You're part of the SkillConnect cooperative — set your own rate, keep your reputation portable, and refer jobs to fellow helpers when you're busy.</span></div>
+
+      <div class="toggle-online">
+        <div>
+          <strong style="font-size:0.88rem;">Online availability</strong>
+          <p style="font-size:0.7rem; color:var(--text-muted);">Visible to nearby customer requests</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked id="onlineToggle" onchange="toggleWorkerOnline()" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="stats-card">
+        <div class="stat-box"><h3 id="techEarnedText">₹2,850</h3><p>Today's Earnings</p></div>
+        <div class="stat-box"><h3 id="techJobsText">6</h3><p>Jobs Done</p></div>
+        <div class="stat-box"><h3 id="techTrustText">93</h3><p>Trust Score</p></div>
+      </div>
+
+      <div>
+        <div class="section-eyebrow">📍 Hyperlocal job map</div>
+        <div id="workerNearbyMap" class="live-map" style="margin-top:8px;"></div>
+        <div class="map-legend" style="margin-top:8px;">
+          <span><i class="dot dot-customer"></i> Job request</span>
+          <span><i class="dot dot-online"></i> Fellow cooperative helpers online</span>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:0.95rem;">Incoming customer jobs</strong>
+      </div>
+      <div id="techRequests" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:0.95rem;">Earnings ledger</strong>
+      </div>
+      <div class="earnings-ledger" id="earningsLedger"></div>
+    </div>
+
+    <!-- ================= EDA / ANALYTICS ================= -->
+    <div id="edaDash" class="eda-view">
+      <div class="coop-banner">🛡️ <span>Admin-only view. Cooperative-wide metrics are not visible to customers or helpers.</span></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:1.1rem; color:var(--primary-dark);" class="font-display">📊 Cooperative Insights</strong>
+      </div>
+      <div class="eda-metric-grid">
+        <div class="eda-metric-box"><h3 id="edaGmv">₹1,42,800</h3><p>Total Monthly GMV</p></div>
+        <div class="eda-metric-box"><h3 id="edaCompletion">96.4%</h3><p>Job Completion Rate</p></div>
+        <div class="eda-metric-box"><h3 id="edaTrust">—</h3><p>Avg Cooperative Trust Score</p></div>
+        <div class="eda-metric-box"><h3 id="edaActive">—</h3><p>Active Verified Helpers</p></div>
+      </div>
+      <div class="eda-card">
+        <div class="section-eyebrow">🤝 Cooperative model</div>
+        <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.6;">Helpers on SkillConnect own their profile, set their own rate within a fair-price band, and can refer jobs to one another instead of losing the customer — keeping work inside the cooperative.</p>
+      </div>
+
+      <div class="eda-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="section-eyebrow">👥 Manage accounts</div>
+          <button class="btn-trust" style="padding:6px 12px;" onclick="openAccountModal('create')">+ New account</button>
+        </div>
+        <div class="account-list" id="accountList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AI PROBLEM-FIRST DIAGNOSIS MODAL -->
+<div class="modal-overlay" id="aiModal">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h4 style="font-size:1.05rem; font-weight:800;">🤖 What's the problem?</h4>
+      <span style="cursor:pointer; font-weight:800; font-size:1.1rem;" onclick="closeAIChat()">✕</span>
+    </div>
+    <p style="font-size:0.76rem; color:var(--text-muted);">You don't need to know what kind of professional you need — just describe it in plain words.</p>
+    <div class="input-field"><span class="input-icon">💬</span><input type="text" id="aiProblemInput" placeholder="e.g. My washing machine is making a strange noise" /></div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Snapshot of the problem (optional)</span>
+      <input type="file" id="aiProblemPhoto" accept="image/*" capture="environment" style="display:none;" onchange="handleDiagnosisPhotoSelect(this)" />
+      <button type="button" class="btn-trust" id="aiPhotoPickBtn" style="align-self:flex-start;" onclick="document.getElementById('aiProblemPhoto').click()">📷 Add a snapshot</button>
+      <div id="aiPhotoPreviewWrap" style="display:none;">
+        <div class="ai-photo-preview">
+          <img id="aiPhotoPreviewImg" src="" alt="Problem snapshot" />
+          <span class="ai-photo-remove" onclick="removeDiagnosisPhoto()">✕ Remove</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-auth-submit" onclick="runDiagnosis()">Diagnose the problem</button>
+    <div id="aiDiagnosisResult" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- MATCHING ENGINE MODAL -->
+<div class="modal-overlay" id="matchModal">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h4 style="font-size:1.05rem; font-weight:800;" id="matchModalTitle">🔎 Matching you now</h4>
+      <span style="cursor:pointer; font-weight:800; font-size:1.1rem;" onclick="closeMatchModal()">✕</span>
+    </div>
+    <div class="match-flow" id="matchFlowContainer"></div>
+  </div>
+</div>
+
+<!-- TRUST SCORE MODAL -->
+<div class="modal-overlay" id="trustModal">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h4 style="font-size:1.05rem; font-weight:800;" id="trustModalName">Trust Profile</h4>
+      <span style="cursor:pointer; font-weight:800; font-size:1.1rem;" onclick="closeTrustModal()">✕</span>
+    </div>
+    <div class="trust-score-ring" id="trustRing" style="--pct:0;"><span id="trustScoreNum">0</span></div>
+    <div id="trustBreakdown"></div>
+  </div>
+</div>
+
+<!-- DIRECT CHAT MODAL -->
+<div class="chat-modal-overlay" id="directChatModal">
+  <div class="direct-chat-card">
+    <div class="direct-chat-header">
+      <h4 id="chatTargetTitle">💬 Chat with Technician</h4>
+      <span style="cursor:pointer; font-weight:800; font-size:1.1rem;" onclick="closeDirectChat()">✕</span>
+    </div>
+    <div class="chat-body-messages" id="chatBodyMessages"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInputText" placeholder="Type a message…" onkeypress="if(event.key==='Enter') sendDirectMessage()" />
+      <button class="btn-send-msg" onclick="sendDirectMessage()">➔</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN: CREATE/EDIT ACCOUNT MODAL -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h4 style="font-size:1.05rem; font-weight:800;" id="accountModalTitle">New Account</h4>
+      <span style="cursor:pointer; font-weight:800; font-size:1.1rem;" onclick="closeAccountModal()">✕</span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Full name</span>
+      <div class="input-field"><span class="input-icon">👤</span><input type="text" id="accName" placeholder="e.g. Priya Sharma" /></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Email address</span>
+      <div class="input-field"><span class="input-icon">✉️</span><input type="email" id="accEmail" placeholder="you@example.com" /></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Password</span>
+      <div class="input-field"><span class="input-icon">🔒</span><input type="password" id="accPassword" placeholder="Set a password" /></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Role</span>
+      <div class="input-field">
+        <select id="accRole" onchange="toggleAccountTechFields()">
+          <option value="customer">👤 Customer</option>
+          <option value="technician">🧰 Skilled Helper</option>
+          <option value="admin">🛡️ Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="accTechFields" style="display: none; flex-direction: column; gap: 10px;">
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <span class="field-label">Specialty</span>
+        <div class="input-field">
+          <select id="accSkill">
+            <option value="plumber">Plumber Specialty 🪠</option>
+            <option value="electrician">Electrician / Appliance Specialty ⚡</option>
+            <option value="carpenter">Carpenter Specialty 🪚</option>
+            <option value="mechanic">Mechanic Specialty 🔧</option>
+            <option value="cleaner">Cleaning Specialist 🧹</option>
+            <option value="painter">Painter Specialist 🎨</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <span class="field-label">Experience</span>
+        <div class="input-field"><input type="text" id="accExp" placeholder="Years of experience (e.g. 5 yrs)" value="5 yrs" /></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <span class="field-label">Hourly rate</span>
+        <div class="input-field"><input type="number" id="accRate" placeholder="Hourly Rate (₹/hr)" value="400" /></div>
+      </div>
+    </div>
+
+    <button class="btn-auth-submit" onclick="saveAccount()">Save Account</button>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h4 style="font-size:1.05rem; font-weight:800;" id="modalWorkerName">Book Technician</h4>
+      <span style="cursor:pointer; font-weight:800; font-size:1.1rem;" onclick="closeModal()">✕</span>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Service address</span>
+      <div class="input-field"><input type="text" id="bookAddress" value="Flat 402, Green Heights, Jubilee Hills" /></div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <span class="field-label">Describe the issue</span>
+      <div class="input-field"><input type="text" id="bookProblem" placeholder="Issue description…" value="Water pipe fitting leak" /></div>
+    </div>
+    <div id="bookPhotoWrap" style="display:none; flex-direction:column; gap:6px;">
+      <span class="field-label">Snapshot from diagnosis</span>
+      <div class="ai-photo-preview" style="max-width:100%;"><img id="bookPhotoImg" src="" alt="Problem snapshot" /></div>
+    </div>
+    <div class="fair-price-hint" id="bookingPriceEstimate" style="display:flex;"></div>
+    <button class="btn-auth-submit" onclick="confirmBooking()">Confirm & Start Live GPS Dispatch</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script src="js/state.js"></script>
+<script src="js/seed-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/location.js"></script>
+<script src="js/trust.js"></script>
+<script src="js/diagnosis.js"></script>
+<script src="js/chat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="js/maps.js"></script>
+<script src="js/customer.js"></script>
+<script src="js/technician.js"></script>
+<script src="js/matching.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
